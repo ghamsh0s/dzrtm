@@ -1,1 +1,2 @@
-worker: python dzrtm.py 
+web: python dzrtm.py
+worker: python dzrtm.py
