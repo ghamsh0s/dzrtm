@@ -46,9 +46,9 @@ async def check_stock(url):
                     html_content = await response.text()
                     soup = BeautifulSoup(html_content, 'html.parser')
                     logging.debug(soup.prettify())  # Debug: Print the entire HTML
-                    stock_info = soup.find("div", class_="stock unavailable")
+                    stock_info = soup.select_one('div.stock > span')
                     if stock_info:
-                        stock_text = stock_info.find("span").text
+                        stock_text = stock_info.get_text(strip=True)
                         logging.info(f"Stock status found: {stock_text}")
                         return stock_text
                     else:
