@@ -1,7 +1,7 @@
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
-from telegram import Bot
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import logging
 
 # Configure logging
@@ -12,26 +12,67 @@ TELEGRAM_BOT_TOKEN = '6996028484:AAHESRCI7ekhF8ZfVlSXkjncn9CIUyKpZ_c'
 TELEGRAM_CHAT_ID = '-1002243740808'
 CHECK_INTERVAL = 5  # Time between checks in seconds
 
-# List of product URLs to monitor
+# List of product URLs to monitor and their corresponding image URLs
 PRODUCT_URLS = [
+    "https://www.dzrt.com/en/spicy-zest.html",
     "https://www.dzrt.com/en/haila.html",
     "https://www.dzrt.com/en/samra.html",
     "https://www.dzrt.com/en/tamra.html",
-    "https://www.dzrt.com/en/highland-berries.html",
-    "https://www.dzrt.com/en/purple-mist.html",
+    "https://www.dzrt.com/en/edgy-mint.html",
     "https://www.dzrt.com/en/icy-rush.html",
     "https://www.dzrt.com/en/seaside-frost.html",
+    "https://www.dzrt.com/en/garden-mint.html",
+    "https://www.dzrt.com/en/highland-berries.html",
     "https://www.dzrt.com/en/mint-fusion.html",
-    "https://www.dzrt.com/en/spicy-zest.html",
-    "https://www.dzrt.com/en/edgy-mint.html",
-    "https://www.dzrt.com/en/garden-mint.html"
+    "https://www.dzrt.com/en/purple-mist.html"
 ]
 
-async def send_telegram_message(message):
+PRODUCT_PHOTOS = {
+    "https://www.dzrt.com/en/spicy-zest.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/p/spicy_zest_3mg_vue04.png",
+    "https://www.dzrt.com/en/haila.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/1/5/153a9e23be648dc7153a9e23be648dc7haila__2810mg_29-view4_6_11zon_1.png",
+    "https://www.dzrt.com/en/samra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/a/samra__10mg_-view4_1_11zon_1.png",
+    "https://www.dzrt.com/en/tamra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/t/a/tamra__6mg_-view4_3_11zon_1.png",
+    "https://www.dzrt.com/en/edgy-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/e/d/edgy_mint_6mg_vue04.png",
+    "https://www.dzrt.com/en/icy-rush.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/i/c/icy_rush_10mg_vue04_1.png",
+    "https://www.dzrt.com/en/seaside-frost.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/e/seaside_frost_10mg_vue04_1.png",
+    "https://www.dzrt.com/en/garden-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/g/a/garden_mint_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/highland-berries.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/h/i/highland_berries_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/mint-fusion.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/m/i/mint_fusion_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/purple-mist.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/p/u/purple_mist_3mg_vue04-20230707.png"
+}
+
+async def send_telegram_message(product_name, stock_status, photo_url, product_url):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     try:
-        logging.info(f"Sending message: {message}")
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        logging.info(f"Sending message for product: {product_name}")
+
+        # Create inline keyboard buttons in pairs
+        keyboard = [
+            [
+                InlineKeyboardButton("Product Link", url=product_url),
+                InlineKeyboardButton("Cart", url="https://www.dzrt.com/en/checkout/cart/")
+            ],
+            [
+                InlineKeyboardButton("Reorder", url="https://www.dzrt.com/en/sales/order/history/"),
+                InlineKeyboardButton("Checkout", url="https://www.dzrt.com/en/onestepcheckout.html")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        # Prepare the message
+        message = (
+            f"Product: {product_name}\n"
+            f"Stock Status: {stock_status}\n"
+            f"Photo:\n{photo_url}"
+        )
+
+        # Send the message
+        await bot.send_photo(
+            chat_id=TELEGRAM_CHAT_ID,
+            photo=photo_url,
+            caption=message,
+            reply_markup=reply_markup
+        )
         logging.info("Message sent successfully")
     except Exception as e:
         logging.error(f"Failed to send message: {e}")
@@ -70,23 +111,30 @@ async def monitor_stock():
 
     while True:
         for product_url in PRODUCT_URLS:
-            stock_status = await check_stock(product_url)
-            if stock_status:
-                if previous_statuses[product_url] is None:
-                    # First check, just update the status
-                    previous_statuses[product_url] = stock_status
-                else:
-                    if stock_status != previous_statuses[product_url]:
-                        # Status has changed, send a notification
-                        logging.info(f"Stock status changed for {product_url}, sending message...")
-                        await send_telegram_message(
-                            f"Product at {product_url} stock status changed to: {stock_status}"
-                        )
+            photo_url = PRODUCT_PHOTOS.get(product_url, None)  # Fetch the photo URL
+            if photo_url:
+                stock_status = await check_stock(product_url)
+                if stock_status:
+                    if previous_statuses[product_url] is None:
+                        # First check, just update the status
                         previous_statuses[product_url] = stock_status
                     else:
-                        logging.info(f"No change in stock status for {product_url}.")
+                        if stock_status != previous_statuses[product_url]:
+                            # Status has changed, send a notification
+                            logging.info(f"Stock status changed for {product_url}, sending message...")
+                            await send_telegram_message(
+                                product_name=product_url.split('/')[-1].replace('.html', '').title(),  # Extract and format product name
+                                stock_status=stock_status,
+                                photo_url=photo_url,
+                                product_url=product_url
+                            )
+                            previous_statuses[product_url] = stock_status
+                        else:
+                            logging.info(f"No change in stock status for {product_url}.")
+                else:
+                    logging.warning(f"Could not retrieve stock status for {product_url}.")
             else:
-                logging.warning(f"Could not retrieve stock status for {product_url}.")
+                logging.warning(f"No photo URL found for {product_url}.")
         
         # Wait before checking again
         await asyncio.sleep(CHECK_INTERVAL)
