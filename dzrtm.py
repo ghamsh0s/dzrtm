@@ -3,8 +3,8 @@ import asyncio
 from bs4 import BeautifulSoup
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import logging
-from datetime import datetime, time, timedelta
 import pytz
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,6 +13,8 @@ logging.basicConfig(level=logging.INFO)
 TELEGRAM_BOT_TOKEN = '6996028484:AAHESRCI7ekhF8ZfVlSXkjncn9CIUyKpZ_c'
 TELEGRAM_CHAT_ID = '-1002243740808'
 CHECK_INTERVAL = 5  # Time between checks in seconds
+PRODUCT_CHECK_START_HOUR = 12  # 12 PM
+PRODUCT_CHECK_END_HOUR = 18  # 6 PM
 
 # List of product URLs to monitor and their corresponding image URLs
 PRODUCT_URLS = [
@@ -43,8 +45,9 @@ PRODUCT_PHOTOS = {
     "https://www.dzrt.com/en/purple-mist.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/p/u/purple_mist_3mg_vue04-20230707.png"
 }
 
-# URL for the main product page to monitor arrangement changes
-PRODUCT_PAGE_URL = "https://www.dzrt.com/en/our-products.html"
+# Emojis
+GREEN_CHECK = "✅"
+RED_X = "❌"
 
 async def send_telegram_message(product_name, stock_status, photo_url, product_url):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
@@ -64,11 +67,16 @@ async def send_telegram_message(product_name, stock_status, photo_url, product_u
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
 
+        # Translate stock status
+        if stock_status == "Back In Stock Soon":
+            stock_status = f"غير متوفر {RED_X}"
+        elif stock_status == "In Stock":
+            stock_status = f"متوفر {GREEN_CHECK}"
+
         # Prepare the message
         message = (
-            f"Product: {product_name}\n"
-            f"Stock Status: {stock_status}\n"
-            f"Photo:\n{photo_url}"
+            f"المنتج: {product_name}\n"
+            f"حالة التوفر: {stock_status}"
         )
 
         # Send the message
@@ -81,16 +89,6 @@ async def send_telegram_message(product_name, stock_status, photo_url, product_u
         logging.info("Message sent successfully")
     except Exception as e:
         logging.error(f"Failed to send message: {e}")
-
-async def send_arrangement_change_alert():
-    bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    try:
-        logging.info("Sending arrangement change alert")
-        message = "تم تغيير ترتيب المنتجات. هذا يشير إلى أن بعض المنتجات ستكون متاحة قريبًا."
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        logging.info("Arrangement change alert sent successfully")
-    except Exception as e:
-        logging.error(f"Failed to send arrangement change alert: {e}")
 
 async def check_stock(url):
     async with aiohttp.ClientSession() as session:
@@ -123,18 +121,17 @@ async def check_stock(url):
 async def check_product_arrangement():
     async with aiohttp.ClientSession() as session:
         try:
-            logging.info(f"Checking product arrangement for URL: {PRODUCT_PAGE_URL}")
-            async with session.get(PRODUCT_PAGE_URL) as response:
+            logging.info("Checking product arrangement on the main product page")
+            async with session.get("https://www.dzrt.com/en/our-products.html") as response:
                 logging.info(f"HTTP response status: {response.status}")
                 if response.status == 200:
                     html_content = await response.text()
                     soup = BeautifulSoup(html_content, 'html.parser')
-                    products = soup.select('li.product-item')  # Adjust the selector as needed
-                    product_ids = [product['data-product-id'] for product in products]
-                    logging.info(f"Product arrangement: {product_ids}")
-                    return product_ids
+                    product_divs = soup.select('div.product-item')
+                    current_arrangement = [div['data-product-id'] for div in product_divs]
+                    return current_arrangement
                 else:
-                    logging.error(f"Failed to retrieve the product page. Status code: {response.status}")
+                    logging.error(f"Failed to retrieve the page. Status code: {response.status}")
                     return None
         except aiohttp.ClientError as e:
             logging.error(f"Client error occurred: {e}")
@@ -143,63 +140,39 @@ async def check_product_arrangement():
             logging.error(f"An error occurred: {e}")
             return None
 
-async def monitor_stock():
+async def monitor_stock_and_arrangement():
     # Dictionary to keep track of previous stock statuses
     previous_statuses = {url: None for url in PRODUCT_URLS}
-    previous_arrangement = None
+    previous_arrangement = []
 
-    # Set timezone for Saudi Arabia
     saudi_tz = pytz.timezone('Asia/Riyadh')
 
     while True:
-        # Check stock for individual products
+        now = datetime.now(saudi_tz)
+        if PRODUCT_CHECK_START_HOUR <= now.hour < PRODUCT_CHECK_END_HOUR:
+            current_arrangement = await check_product_arrangement()
+            if current_arrangement and current_arrangement != previous_arrangement:
+                logging.info("Product arrangement changed, sending alert...")
+                previous_arrangement = current_arrangement
+                bot = Bot(token=TELEGRAM_BOT_TOKEN)
+                await bot.send_message(
+                    chat_id=TELEGRAM_CHAT_ID,
+                    text="تنبيه: تم تغيير ترتيب المنتجات على الصفحة الرئيسية. من المتوقع توفر منتجات قريباً."
+                )
+
         for product_url in PRODUCT_URLS:
             photo_url = PRODUCT_PHOTOS.get(product_url, None)  # Fetch the photo URL
-            if photo_url:
-                stock_status = await check_stock(product_url)
-                if stock_status:
-                    if previous_statuses[product_url] is None:
-                        # First check, just update the status
-                        previous_statuses[product_url] = stock_status
-                    else:
-                        if stock_status != previous_statuses[product_url]:
-                            # Status has changed, send a notification
-                            logging.info(f"Stock status changed for {product_url}, sending message...")
-                            await send_telegram_message(
-                                product_name=product_url.split('/')[-1].replace('.html', '').title(),  # Extract and format product name
-                                stock_status="متوفر" if "In stock" in stock_status else "غير متوفر",
-                                photo_url=photo_url,
-                                product_url=product_url
-                            )
-                            previous_statuses[product_url] = stock_status
-                        else:
-                            logging.info(f"No change in stock status for {product_url}.")
-                else:
-                    logging.warning(f"Could not retrieve stock status for {product_url}.")
-            else:
-                logging.warning(f"No photo URL found for {product_url}.")
+            if photo_url is None:
+                logging.warning(f"No photo URL found for {product_url}")
 
-        # Get current time in Saudi Arabia
-        now_saudi = datetime.now(saudi_tz).time()
+            current_status = await check_stock(product_url)
+            if current_status and current_status != previous_statuses[product_url]:
+                product_name = product_url.split("/")[-1].replace('.html', '').replace('-', ' ').title()
+                logging.info(f"Stock status changed for {product_name}: {current_status}")
+                previous_statuses[product_url] = current_status
+                await send_telegram_message(product_name, current_status, photo_url, product_url)
 
-        # Check product arrangement only between 12 PM and 6 PM Saudi Arabia time
-        if time(12, 0) <= now_saudi <= time(18, 0):
-            current_arrangement = await check_product_arrangement()
-            if current_arrangement:
-                if previous_arrangement is None:
-                    # First check, just update the arrangement
-                    previous_arrangement = current_arrangement
-                else:
-                    if current_arrangement != previous_arrangement:
-                        # Arrangement has changed, send an alert
-                        logging.info("Product arrangement has changed, sending alert...")
-                        await send_arrangement_change_alert()
-                        previous_arrangement = current_arrangement
-                    else:
-                        logging.info("No change in product arrangement.")
-
-        # Wait before checking again
         await asyncio.sleep(CHECK_INTERVAL)
 
-if __name__ == "__main__":
-    asyncio.run(monitor_stock())
+if __name__ == '__main__':
+    asyncio.run(monitor_stock_and_arrangement())
