@@ -3,7 +3,7 @@ import asyncio
 from bs4 import BeautifulSoup
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 import logging
-from datetime import datetime, time, timedelta
+from datetime import datetime, time
 import pytz
 
 # Configure logging
@@ -113,8 +113,10 @@ async def check_cart(session):
             cart_info = soup.get_text(strip=True)
             logging.debug(cart_info)  # Debug: Print the entire cart text
 
-            # Check if any of the predefined messages are missing
-            if all(message not in cart_info for message in MISSING_PRODUCT_MESSAGES):
+            # Check if any of the predefined messages are present
+            if any(message in cart_info for message in MISSING_PRODUCT_MESSAGES):
+                logging.info("Products are still out of stock.")
+            else:
                 logging.info("Predefined messages not found in the cart.")
                 await send_telegram_message(
                     "ربما تتوفر المنتجات قريبا , كونوا على استعداد"
@@ -155,6 +157,7 @@ async def monitor_stock():
     previous_statuses = {url: None for url in PRODUCT_URLS}
 
     while True:
+        logging.info("Starting stock check loop...")
         for product_url in PRODUCT_URLS:
             photo_url = PRODUCT_PHOTOS.get(product_url, None)  # Fetch the photo URL
             if photo_url:
@@ -196,7 +199,9 @@ async def monitor_cart_and_stock():
         await login(session)  # Perform login
 
         while True:
+            logging.info("Checking if within monitoring hours...")
             if is_within_time_range():
+                logging.info("Within monitoring hours. Checking cart and stock...")
                 await check_cart(session)  # Check cart page
                 await monitor_stock()  # Check stock status
             else:
