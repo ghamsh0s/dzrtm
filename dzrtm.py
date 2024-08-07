@@ -51,18 +51,19 @@ async def send_telegram_message(message, product_name=None, stock_status=None, p
         if product_name and stock_status and photo_url and product_url:
             keyboard = [
                 [
-                    InlineKeyboardButton("رابط المنتج", url=product_url)
+                    InlineKeyboardButton("🔗 رابط المنتج", url=product_url),
+                    InlineKeyboardButton("🔗 رابط السلة", url="https://www.dzrt.com/en/onestepcheckout.html")
                 ],
                 [
-                    InlineKeyboardButton("إعادة الطلب", url="https://www.dzrt.com/en/sales/order/history/"),
-                    InlineKeyboardButton("صفحة الدفع", url="https://www.dzrt.com/en/onestepcheckout.html")
+                    InlineKeyboardButton("🔗 إعادة الطلب", url="https://www.dzrt.com/en/sales/order/history/"),
+                    InlineKeyboardButton("🔗 صفحة الدفع", url="https://www.dzrt.com/en/onestepcheckout.html")
                 ]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             message = (
                 f"حالة التوفر: {stock_status}\n"
-                f"صورة المنتج:\n{photo_url}"
+                
             )
             await bot.send_photo(
                 chat_id=TELEGRAM_CHAT_ID,
@@ -129,7 +130,7 @@ async def monitor_stock():
                                 message=f"Product: {product_url.split('/')[-1].replace('.html', '').title()}\n"
                                         f"Status: {'Available' if stock_status == 'In stock' else 'Not Available'}",
                                 product_name=product_url.split('/')[-1].replace('.html', '').title(),  # Extract and format product name
-                                stock_status="متوفر" if stock_status == "In stock" else "غير متوفر",
+                                stock_status="✅ متوفر" if stock_status == "In stock" else "❌ غير متوفر",
                                 photo_url=photo_url,
                                 product_url=product_url
                             )
