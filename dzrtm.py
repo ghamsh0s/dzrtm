@@ -126,6 +126,8 @@ async def monitor_stock():
                             # Status has changed, send a notification
                             logging.info(f"Stock status changed for {product_url}, sending message...")
                             await send_telegram_message(
+                                message=f"Product: {product_url.split('/')[-1].replace('.html', '').title()}\n"
+                                        f"Status: {'Available' if stock_status == 'In stock' else 'Not Available'}",
                                 product_name=product_url.split('/')[-1].replace('.html', '').title(),  # Extract and format product name
                                 stock_status="متوفر" if stock_status == "In stock" else "غير متوفر",
                                 photo_url=photo_url,
@@ -154,10 +156,8 @@ async def monitor_stock_only():
         if is_within_time_range():
             await monitor_stock()  # Check stock status
         else:
-            logging.info("Outside of monitoring hours. Sleeping for 1 hour.")
-            await asyncio.sleep(3600)  # Sleep for 1 hour if outside the time range
-
-        await asyncio.sleep(CHECK_INTERVAL)  # Wait before checking again
+            logging.info("Outside monitoring hours. Sleeping until next check.")
+        await asyncio.sleep(CHECK_INTERVAL)  # Wait before next check
 
 if __name__ == "__main__":
     asyncio.run(monitor_stock_only())
