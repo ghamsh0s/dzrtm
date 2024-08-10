@@ -16,31 +16,31 @@ CHECK_INTERVAL = 5  # Time between checks for product stock in seconds
 
 # List of product URLs to monitor and their corresponding image URLs
 PRODUCT_URLS = [
-    "https://www.dzrt.com/ar/spicy-zest.html",
-    "https://www.dzrt.com/ar/haila.html",
-    "https://www.dzrt.com/ar/samra.html",
-    "https://www.dzrt.com/ar/tamra.html",
-    "https://www.dzrt.com/ar/edgy-mint.html",
-    "https://www.dzrt.com/ar/icy-rush.html",
-    "https://www.dzrt.com/ar/seaside-frost.html",
-    "https://www.dzrt.com/ar/garden-mint.html",
-    "https://www.dzrt.com/ar/highland-berries.html",
-    "https://www.dzrt.com/ar/mint-fusion.html",
-    "https://www.dzrt.com/ar/purple-mist.html"
+    "https://www.dzrt.com/en/spicy-zest.html",
+    "https://www.dzrt.com/en/haila.html",
+    "https://www.dzrt.com/en/samra.html",
+    "https://www.dzrt.com/en/tamra.html",
+    "https://www.dzrt.com/en/edgy-mint.html",
+    "https://www.dzrt.com/en/icy-rush.html",
+    "https://www.dzrt.com/en/seaside-frost.html",
+    "https://www.dzrt.com/en/garden-mint.html",
+    "https://www.dzrt.com/en/highland-berries.html",
+    "https://www.dzrt.com/en/mint-fusion.html",
+    "https://www.dzrt.com/en/purple-mist.html"
 ]
 
 PRODUCT_PHOTOS = {
-    "https://www.dzrt.com/ar/spicy-zest.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/p/spicy_zest_3mg_vue04.png",
-    "https://www.dzrt.com/ar/haila.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/1/5/153a9e23be648dc7153a9e23be648dc7haila__2810mg_29-view4_6_11zon_1.png",
-    "https://www.dzrt.com/ar/samra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/a/samra__10mg_-view4_1_11zon_1.png",
-    "https://www.dzrt.com/ar/tamra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/t/a/tamra__6mg_-view4_3_11zon_1.png",
-    "https://www.dzrt.com/ar/edgy-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/e/d/edgy_mint_6mg_vue04.png",
-    "https://www.dzrt.com/ar/icy-rush.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/i/c/icy_rush_10mg_vue04_1.png",
-    "https://www.dzrt.com/ar/seaside-frost.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/e/seaside_frost_10mg_vue04_1.png",
-    "https://www.dzrt.com/ar/garden-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/g/a/garden_mint_6mg_vue04_1.png",
-    "https://www.dzrt.com/ar/highland-berries.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/h/i/highland_berries_6mg_vue04_1.png",
-    "https://www.dzrt.com/ar/mint-fusion.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/m/i/mint_fusion_6mg_vue04_1.png",
-    "https://www.dzrt.com/ar/purple-mist.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/p/u/purple_mist_3mg_vue04-20230707.png"
+    "https://www.dzrt.com/en/spicy-zest.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/p/spicy_zest_3mg_vue04.png",
+    "https://www.dzrt.com/en/haila.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/1/5/153a9e23be648dc7153a9e23be648dc7haila__2810mg_29-view4_6_11zon_1.png",
+    "https://www.dzrt.com/en/samra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/a/samra__10mg_-view4_1_11zon_1.png",
+    "https://www.dzrt.com/en/tamra.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/t/a/tamra__6mg_-view4_3_11zon_1.png",
+    "https://www.dzrt.com/en/edgy-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/e/d/edgy_mint_6mg_vue04.png",
+    "https://www.dzrt.com/en/icy-rush.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/i/c/icy_rush_10mg_vue04_1.png",
+    "https://www.dzrt.com/en/seaside-frost.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/s/e/seaside_frost_10mg_vue04_1.png",
+    "https://www.dzrt.com/en/garden-mint.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/g/a/garden_mint_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/highland-berries.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/h/i/highland_berries_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/mint-fusion.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/m/i/mint_fusion_6mg_vue04_1.png",
+    "https://www.dzrt.com/en/purple-mist.html": "https://assets.dzrt.com/media/catalog/product/cache/40c318bf2c9222cf50b132326f5e69e5/p/u/purple_mist_3mg_vue04-20230707.png"
 }
 
 async def send_telegram_message(message, product_name=None, stock_status=None, photo_url=None, product_url=None):
