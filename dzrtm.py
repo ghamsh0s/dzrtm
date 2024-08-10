@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Replace these with your actual bot token and chat ID
 TELEGRAM_BOT_TOKEN = '6996028484:AAHESRCI7ekhF8ZfVlSXkjncn9CIUyKpZ_c'
-TELEGRAM_CHAT_ID = '1002243740808'
+TELEGRAM_CHAT_ID = '-1002243740808'
 CHECK_INTERVAL = 5  # Time between checks for product stock in seconds
 
 # List of product URLs to monitor and their corresponding image URLs
