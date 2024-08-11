@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from telegram import Bot
 import logging
 import hashlib
-from datetime import datetime, timedelta, time
+from datetime import datetime, time
 import pytz
 
 # Configure logging
@@ -43,8 +43,8 @@ async def check_page():
     tz = pytz.timezone('Asia/Riyadh')
     sa_time = datetime.now(tz)
 
-    # Check if current time is after 12 PM and before 12 AM
-    if not time(11, 0) <= sa_time.time() < time(23, 59):
+    # Check if current time is between 12 PM and 12 AM
+    if not time(12, 0) <= sa_time.time() < time(23, 59):
         logging.info("Outside monitoring hours.")
         return
 
