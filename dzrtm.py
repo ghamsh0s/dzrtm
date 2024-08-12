@@ -148,7 +148,7 @@ def is_within_time_range():
     tz = pytz.timezone('Asia/Riyadh')  # Saudi Arabia time zone
     now = datetime.now(tz).time()
     start_time = time(12, 0)  # 12:00 PM
-    end_time = time(20, 0)   # 8:00 PM
+    end_time = time(23, 0)   # 11:00 PM
     return start_time <= now <= end_time
 
 async def monitor_stock_only():
