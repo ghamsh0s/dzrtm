@@ -49,6 +49,11 @@ async def check_page():
         logging.info("Outside monitoring hours.")
         return
 
+    # Check if a notification has already been sent today
+    if last_notification_date is not None and last_notification_date.date() == sa_time.date():
+        logging.info("Notification already sent today. Sleeping until next day.")
+        return
+
     async with aiohttp.ClientSession(headers=HEADERS) as session:
         try:
             logging.info(f"Checking page for URL: {PRODUCT_URL}")
@@ -74,6 +79,7 @@ async def check_page():
                             await send_telegram_message(f"ربما تتوفر المنتجات قريبا تسجيل دخول وتحديث الصفحة")
                             previous_arrangement_hash = current_arrangement_hash
                             last_notification_date = sa_time  # Update the last notification date
+                            await asyncio.sleep((24 - sa_time.hour) * 3600)  # Sleep until the next day at 12 PM
                         else:
                             logging.info("No change in product arrangement.")
                     else:
