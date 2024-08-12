@@ -26,6 +26,7 @@ HEADERS = {
 # Variables to track product arrangements and daily notifications
 previous_arrangement_hash = None
 last_notification_date = None
+initial_check_done = False
 
 async def send_telegram_message(message):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
@@ -37,7 +38,7 @@ async def send_telegram_message(message):
         logging.error(f"Failed to send message: {e}")
 
 async def check_page():
-    global previous_arrangement_hash, last_notification_date
+    global previous_arrangement_hash, last_notification_date, initial_check_done
 
     # Get current Saudi Arabia time
     tz = pytz.timezone('Asia/Riyadh')
@@ -46,11 +47,6 @@ async def check_page():
     # Check if current time is between 12 PM and 12 AM
     if not time(12, 0) <= sa_time.time() < time(23, 59):
         logging.info("Outside monitoring hours.")
-        return
-
-    # Check if we already sent a notification today
-    if last_notification_date is not None and last_notification_date.date() == sa_time.date():
-        logging.info("Notification already sent today. Ignoring further changes.")
         return
 
     async with aiohttp.ClientSession(headers=HEADERS) as session:
@@ -68,10 +64,11 @@ async def check_page():
                         # Convert the products section to a string and calculate its hash
                         current_arrangement_hash = hashlib.md5(products_section.prettify().encode('utf-8')).hexdigest()
                         
-                        # Compare with the previous hash
-                        if previous_arrangement_hash is None:
+                        if not initial_check_done:
+                            # Save the initial arrangement at 12 PM and don't send a notification
                             previous_arrangement_hash = current_arrangement_hash
-                            logging.info("Initial product arrangement saved.")
+                            initial_check_done = True
+                            logging.info("Initial product arrangement saved at 12 PM. No notification sent.")
                         elif current_arrangement_hash != previous_arrangement_hash:
                             logging.info("Product arrangement has changed.")
                             await send_telegram_message(f"ربما تتوفر المنتجات قريبا تسجيل دخول وتحديث الصفحة")
