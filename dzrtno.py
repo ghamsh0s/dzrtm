@@ -49,11 +49,6 @@ async def check_page():
         logging.info("Outside monitoring hours.")
         return
 
-    # Check if a notification has already been sent today
-    if last_notification_date is not None and last_notification_date.date() == sa_time.date():
-        logging.info("Notification already sent today. Sleeping until next day.")
-        return
-
     async with aiohttp.ClientSession(headers=HEADERS) as session:
         try:
             logging.info(f"Checking page for URL: {PRODUCT_URL}")
