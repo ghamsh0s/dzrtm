@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 # Telegram bot details
 TELEGRAM_BOT_TOKEN = '7207906313:AAGsj1zHZeCK6NDd87pPqfbYOcae5OrWdWw'
 TELEGRAM_CHAT_ID_1 = '-1002243740808'  # First channel
-TELEGRAM_CHAT_ID_2 = '-1002246783083'  # Second channel (replace with actual ID)
+TELEGRAM_CHAT_ID_2 = '-1002155698996'  # Second channel (replace with actual ID)
 CHECK_INTERVAL = 5  # Time between checks in seconds
 
 # Product page URL
