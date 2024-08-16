@@ -12,7 +12,8 @@ logging.basicConfig(level=logging.INFO)
 
 # Telegram bot details
 TELEGRAM_BOT_TOKEN = '7207906313:AAGsj1zHZeCK6NDd87pPqfbYOcae5OrWdWw'
-TELEGRAM_CHAT_ID = '-1002243740808'
+TELEGRAM_CHAT_ID_1 = '-1002243740808'  # First channel
+TELEGRAM_CHAT_ID_2 = '-1002246783083'  # Second channel (replace with actual ID)
 CHECK_INTERVAL = 5  # Time between checks in seconds
 
 # Product page URL
@@ -31,9 +32,12 @@ notification_sent_today = False
 async def send_telegram_message(message):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     try:
-        logging.info("Sending message to Telegram channel...")
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        logging.info("Message sent successfully")
+        logging.info("Sending message to Telegram channels...")
+        # Send to the first channel
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID_1, text=message)
+        # Send to the second channel
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID_2, text=message)
+        logging.info("Message sent successfully to both channels")
     except Exception as e:
         logging.error(f"Failed to send message: {e}")
 
