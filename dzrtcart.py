@@ -33,41 +33,29 @@ def log(message):
 
 def handle_age_verification():
     try:
-        # Wait explicitly for the pop-up to appear with a longer timeout
         age_modal = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, 'div.modal#modal-age-verification'))
         )
         log("Age verification pop-up detected.")
-        
-        # Once the pop-up is detected, wait a little more to ensure it is fully loaded
         time.sleep(2)
-        
-        # Click the "Yes I am" button to proceed
         yes_button = age_modal.find_element(By.XPATH, "//button[contains(text(), 'Yes I am')]")
         yes_button.click()
         log("Clicked 'Yes I am' button.")
-        
-        # Wait until the modal is no longer visible
         WebDriverWait(driver, 5).until(EC.invisibility_of_element(age_modal))
         log("Age verification modal closed.")
-        
     except Exception as e:
         log("No age verification pop-up found or failed to handle: " + str(e))
 
 def login():
     driver.get(LOGIN_URL)
     log("Navigated to login page.")
-
-    # Handle age verification pop-up if present
     handle_age_verification()
 
     try:
-        # Wait for the page to fully load before interacting
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.TAG_NAME, "body"))
         )
 
-        # Enter email and password
         username_field = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.NAME, "login[username]"))
         )
@@ -78,19 +66,15 @@ def login():
         )
         password_field.send_keys(PASSWORD)
 
-        # Wait for the login button to be clickable
         login_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.ID, "send2"))
         )
-
-        # Scroll the button into view and click it using JavaScript to avoid click interception
         driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
         driver.execute_script("arguments[0].click();", login_button)
         log("Clicked login button.")
 
-        # Wait for the mini cart counter to load and show a valid number
-        max_wait_time = 20  # Total time to wait for the cart counter (in seconds)
-        poll_interval = 1    # Check every 1 second
+        max_wait_time = 20
+        poll_interval = 1
         elapsed_time = 0
 
         while elapsed_time < max_wait_time:
@@ -104,11 +88,9 @@ def login():
             except:
                 pass
 
-            # Wait for a second before checking again
             time.sleep(poll_interval)
             elapsed_time += poll_interval
 
-        # If we exit the loop, it means the counter was not detected in time
         log("Login failed: Mini cart counter did not show a valid number within the time limit.")
         return False
 
@@ -118,14 +100,12 @@ def login():
 
 def check_cart():
     driver.get(CART_URL)
-    time.sleep(5)  # Ensure all elements load
+    time.sleep(5)
     log("Navigated to cart page.")
 
-    # Look for the "No source items" and "Out of stock" messages
     no_source_items_present = driver.find_elements(By.XPATH, "//*[contains(text(), 'There are no source items')]")
     out_of_stock_present = driver.find_elements(By.XPATH, "//*[contains(text(), 'This product is out of stock')]")
 
-    # Debugging output
     log("No source items message found: " + str(bool(no_source_items_present)))
     log("Out of stock message found: " + str(bool(out_of_stock_present)))
 
@@ -137,31 +117,24 @@ def send_telegram_notification(message):
     log("Telegram notification sent.")
 
 def monitor():
-    sa_tz = pytz.timezone('Asia/Riyadh')
     logged_in = False
     while True:
-        now = datetime.now(sa_tz)
-        if 12 <= now.hour < 24:  # 12 PM to 12 AM Saudi Arabia time
+        if not logged_in:
+            logged_in = login()
             if not logged_in:
-                logged_in = login()
-                if not logged_in:
-                    log("Login failed, retrying in 1 minute...")
-                    time.sleep(60)
-                    continue
+                log("Login failed, retrying in 1 minute...")
+                time.sleep(60)
+                continue
 
-            if check_cart():
-                send_telegram_notification("Alert: The product is expected to be in stock soon.")
-                log("Notification sent.")
-                time.sleep(600)  # Wait 10 minutes before checking again
-            else:
-                log("No changes detected.")
-            
-            # Refresh page to keep session alive
-            driver.refresh()
-            time.sleep(60)  # Wait 1 minute before checking again
+        if check_cart():
+            send_telegram_notification("Alert: The product is expected to be in stock soon.")
+            log("Notification sent.")
+            time.sleep(600)
         else:
-            log("Outside monitoring hours. Sleeping for 1 hour.")
-            time.sleep(3600)  # Sleep for 1 hour before re-checking
+            log("No changes detected.")
+
+        driver.refresh()
+        time.sleep(60)
 
 # Start monitoring
 monitor()
