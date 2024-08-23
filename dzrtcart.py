@@ -33,7 +33,7 @@ def log(message):
 
 def handle_age_verification():
     try:
-        age_modal = WebDriverWait(driver, 15).until(
+        age_modal = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, 'div.modal#modal-age-verification'))
         )
         log("Age verification pop-up detected.")
