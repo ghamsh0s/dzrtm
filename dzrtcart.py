@@ -19,7 +19,7 @@ PASSWORD = '116366'
 TELEGRAM_BOT_TOKEN = '7057170144:AAFrHvf0JlS1wulR_V3bzi92rf_-r1vEHV0'
 TELEGRAM_CHAT_ID = '-1002243740808'
 
-# Setup Selenium with Chrome
+# Setup Selenium with Chromee
 chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--window-size=1920,1080")
