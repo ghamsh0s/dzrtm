@@ -9,6 +9,7 @@ from telegram import Bot
 from datetime import datetime
 import pytz
 from webdriver_manager.chrome import ChromeDriverManager
+import asyncio
 
 # Constants
 LOGIN_URL = 'https://www.dzrt.com/en/customer/account/login/'
@@ -18,12 +19,13 @@ PASSWORD = '116366'
 TELEGRAM_BOT_TOKEN = '7057170144:AAFrHvf0JlS1wulR_V3bzi92rf_-r1vEHV0'
 TELEGRAM_CHAT_ID = '-1002243740808'
 
-# Setup Selenium with visible Chrome
+# Setup Selenium with Chrome
 chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")
-chrome_options.add_argument("--window-size=1920x1080")
-# Uncomment the following line if you want to run headless
-# chrome_options.add_argument("--headless")
+chrome_options.add_argument("--window-size=1920,1080")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+chrome_options.add_argument("--disable-notifications")
 
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service, options=chrome_options)
@@ -73,6 +75,7 @@ def login():
         driver.execute_script("arguments[0].click();", login_button)
         log("Clicked login button.")
 
+        # Check for successful login by verifying mini cart counter
         max_wait_time = 20
         poll_interval = 1
         elapsed_time = 0
@@ -98,43 +101,78 @@ def login():
         log("Login failed: " + str(e))
         return False
 
+def is_logged_in():
+    try:
+        driver.find_element(By.CSS_SELECTOR, 'span.counter-number')
+        log("Already logged in.")
+        return True
+    except:
+        log("Not logged in.")
+        return False
+
 def check_cart():
     driver.get(CART_URL)
     time.sleep(5)
     log("Navigated to cart page.")
 
-    no_source_items_present = driver.find_elements(By.XPATH, "//*[contains(text(), 'There are no source items')]")
-    out_of_stock_present = driver.find_elements(By.XPATH, "//*[contains(text(), 'This product is out of stock')]")
+    product_elements = driver.find_elements(By.CSS_SELECTOR, '#shopping-cart-table > tbody > tr.item-info > td.col.item > div')
 
-    log("No source items message found: " + str(bool(no_source_items_present)))
-    log("Out of stock message found: " + str(bool(out_of_stock_present)))
+    alert_sent = False
 
-    return out_of_stock_present and not no_source_items_present
+    for product in product_elements:
+        try:
+            product_name = product.find_element(By.CSS_SELECTOR, 'strong.product-item-name a').text.strip()
+        except Exception as e:
+            product_name = "Unknown Product"
+            log(f"Failed to get product name: {str(e)}")
 
-def send_telegram_notification(message):
+        try:
+            strength_element = product.find_element(By.CSS_SELECTOR, 'dl > dd')
+            strength = strength_element.text.strip()
+        except Exception as e:
+            strength = "Unknown Strength"
+            log(f"Failed to get product strength: {str(e)}")
+
+        try:
+            red_messages = product.find_elements(By.CSS_SELECTOR, 'div.cart.item.message.error div')
+            message_texts = [message.text.strip() for message in red_messages]
+        except Exception as e:
+            log(f"Failed to get red error messages: {str(e)}")
+            message_texts = []
+
+        log(f"Product '{product_name}' (Strength: {strength}) messages: {message_texts}")
+
+        if len(message_texts) == 1 and message_texts[0] == "This product is out of stock.":
+            log(f"Product '{product_name}' (Strength: {strength}) meets the alert condition.")
+            asyncio.run(send_telegram_notification(f"Alert: The product '{product_name}' with strength '{strength}' is almost in stock. Only the message 'This product is out of stock' is present."))
+            alert_sent = True
+
+    if not alert_sent:
+        log("No products met the alert condition.")
+
+    log("Check completed.")
+
+async def send_telegram_notification(message):
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
-    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-    log("Telegram notification sent.")
+    try:
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+        log("Telegram notification sent.")
+    except Exception as e:
+        log(f"Failed to send Telegram notification: {str(e)}")
 
 def monitor():
-    logged_in = False
     while True:
-        if not logged_in:
-            logged_in = login()
-            if not logged_in:
+        if not is_logged_in():
+            if not login():
                 log("Login failed, retrying in 1 minute...")
                 time.sleep(60)
                 continue
 
-        if check_cart():
-            send_telegram_notification("Alert: The product is expected to be in stock soon.")
-            log("Notification sent.")
-            time.sleep(600)
-        else:
-            log("No changes detected.")
+        check_cart()
+        time.sleep(600)  # Wait for 10 minutes before next check
 
         driver.refresh()
-        time.sleep(60)
+        log("Page refreshed to avoid log off.")
 
 # Start monitoring
 monitor()
