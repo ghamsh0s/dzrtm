@@ -4,12 +4,13 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
 import time
 from telegram import Bot
 from datetime import datetime
 import pytz
-from webdriver_manager.chrome import ChromeDriverManager
 import asyncio
+from webdriver_manager.chrome import ChromeDriverManager
 
 # Constants
 LOGIN_URL = 'https://www.dzrt.com/en/customer/account/login/'
@@ -19,7 +20,7 @@ PASSWORD = '116366'
 TELEGRAM_BOT_TOKEN = '7057170144:AAFrHvf0JlS1wulR_V3bzi92rf_-r1vEHV0'
 TELEGRAM_CHAT_ID = '-1002243740808'
 
-# Setup Selenium with Chromee
+# Setup Selenium with Chrome
 chrome_options = Options()
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--window-size=1920,1080")
@@ -27,13 +28,14 @@ chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--disable-notifications")
 
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
+def setup_driver():
+    service = Service(ChromeDriverManager().install())
+    return webdriver.Chrome(service=service, options=chrome_options)
 
 def log(message):
     print(f"{datetime.now()}: {message}")
 
-def handle_age_verification():
+def handle_age_verification(driver):
     try:
         age_modal = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, 'div.modal#modal-age-verification'))
@@ -48,10 +50,10 @@ def handle_age_verification():
     except Exception as e:
         log("No age verification pop-up found or failed to handle: " + str(e))
 
-def login():
+def login(driver):
     driver.get(LOGIN_URL)
     log("Navigated to login page.")
-    handle_age_verification()
+    handle_age_verification(driver)
 
     try:
         WebDriverWait(driver, 20).until(
@@ -101,7 +103,7 @@ def login():
         log("Login failed: " + str(e))
         return False
 
-def is_logged_in():
+def is_logged_in(driver):
     try:
         driver.find_element(By.CSS_SELECTOR, 'span.counter-number')
         log("Already logged in.")
@@ -110,7 +112,7 @@ def is_logged_in():
         log("Not logged in.")
         return False
 
-def check_cart():
+def check_cart(driver):
     driver.get(CART_URL)
     time.sleep(5)
     log("Navigated to cart page.")
@@ -161,18 +163,22 @@ async def send_telegram_notification(message):
         log(f"Failed to send Telegram notification: {str(e)}")
 
 def monitor():
-    while True:
-        if not is_logged_in():
-            if not login():
-                log("Login failed, retrying in 1 minute...")
-                time.sleep(60)
-                continue
+    driver = setup_driver()
+    try:
+        while True:
+            if not is_logged_in(driver):
+                if not login(driver):
+                    log("Login failed, retrying in 1 minute...")
+                    time.sleep(60)
+                    continue
 
-        check_cart()
-        time.sleep(600)  # Wait for 10 minutes before next check
+            check_cart(driver)
+            time.sleep(600)  # Wait for 10 minutes before next check
 
-        driver.refresh()
-        log("Page refreshed to avoid log off.")
+            driver.refresh()
+            log("Page refreshed to avoid log off.")
+    finally:
+        driver.quit()
 
 # Start monitoring
 monitor()
